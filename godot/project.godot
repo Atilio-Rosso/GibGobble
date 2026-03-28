@@ -1,0 +1,20 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+config/name="GibGobble"
+run/main_scene="res://scenes/Game.tscn"
+config/features=PackedStringArray("4.0")
+
+[autoload]
+
+[rendering]
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/handheld/orientation=1
