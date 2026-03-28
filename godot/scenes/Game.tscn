@@ -1,0 +1,162 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/game.gd" id="1_game"]
+
+[node name="Game" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_game")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 20.0
+offset_right = -16.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="VBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/VBox/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ScoreLabel" type="Label" parent="MarginContainer/VBox/TopBar/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Puntaje: 0"
+
+[node name="TimerLabel" type="Label" parent="MarginContainer/VBox/TopBar/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+text = "Tiempo: 3:00"
+
+[node name="RestartButton" type="Button" parent="MarginContainer/VBox/TopBar/TopRow"]
+layout_mode = 2
+text = "Reiniciar"
+
+[node name="CurrentWordLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Palabra:"
+
+[node name="BoardCenter" type="CenterContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BoardGrid" type="GridContainer" parent="MarginContainer/VBox/BoardCenter"]
+layout_mode = 2
+columns = 5
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="SendButton" type="Button" parent="MarginContainer/VBox/Actions"]
+layout_mode = 2
+text = "Enviar palabra"
+
+[node name="ClearButton" type="Button" parent="MarginContainer/VBox/Actions"]
+layout_mode = 2
+text = "Limpiar selección"
+
+[node name="FeedbackLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Selecciona letras adyacentes y envía la palabra."
+
+[node name="DictionaryInfoLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Diccionario activo: (cargando...)"
+
+[node name="AcceptedTitle" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Palabras aceptadas"
+
+[node name="AcceptedList" type="ItemList" parent="MarginContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 120)
+
+[node name="RoundTimer" type="Timer" parent="."]
+wait_time = 1.0
+one_shot = false
+autostart = false
+
+[node name="RoundEndSound" type="AudioStreamPlayer" parent="."]
+bus = &"Master"
+
+[node name="PauseOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="ConfirmPanel" type="Panel" parent="PauseOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -80.0
+offset_right = 210.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PopupVBox" type="VBoxContainer" parent="PauseOverlay/ConfirmPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="PopupText" type="Label" parent="PauseOverlay/ConfirmPanel/PopupVBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "¿Estas seguro que quieres reiniciar el juego?"
+
+[node name="PopupActions" type="HBoxContainer" parent="PauseOverlay/ConfirmPanel/PopupVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="FinalizeButton" type="Button" parent="PauseOverlay/ConfirmPanel/PopupVBox/PopupActions"]
+layout_mode = 2
+text = "Finalizar"
+
+[node name="BackButton" type="Button" parent="PauseOverlay/ConfirmPanel/PopupVBox/PopupActions"]
+layout_mode = 2
+text = "Volver"
