@@ -104,3 +104,12 @@ Si falta alguno, continúa con los disponibles y muestra en pantalla cuál qued�
 Regla actual de validación en runtime: **mínimo de 4 letras por palabra**.
 
 Modo actual del prototipo: **validación de diccionario desactivada** para priorizar pruebas de UX/jugabilidad (se mantienen reglas de mínimo 4 letras y no duplicados).
+
+
+
+## Ronda con temporizador
+La ronda corre con temporizador configurable en segundos (`round_duration_seconds`) con valor por defecto **180**.
+El contador comienza en `3:00` y descuenta segundo a segundo hasta `0:00`.
+
+## Orientación y layout
+El proyecto está configurado para orientación vertical (portrait) en móvil y el tablero ajusta tamaño de celdas en forma responsive para ocupar casi todo el ancho visible con margen.

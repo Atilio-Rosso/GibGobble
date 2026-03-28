@@ -7,6 +7,7 @@ const WordValidator = preload("res://scripts/core/word_validator.gd")
 const ScoringService = preload("res://scripts/core/scoring_service.gd")
 
 const BOARD_SIZE: int = 5
+@export var round_duration_seconds: int = 180
 const DICE_PATH: String = "res://data/dice_set_big_boggle.json"
 const ENABLE_DICTIONARY_VALIDATION: bool = false
 const DICTIONARY_PATHS: Array[String] = [
@@ -17,11 +18,13 @@ const DICTIONARY_PATHS: Array[String] = [
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
 @onready var score_label: Label = $MarginContainer/VBox/TopBar/ScoreLabel
+@onready var timer_label: Label = $MarginContainer/VBox/TopBar/TimerLabel
 @onready var feedback_label: Label = $MarginContainer/VBox/FeedbackLabel
 @onready var dictionary_info_label: Label = $MarginContainer/VBox/DictionaryInfoLabel
 @onready var accepted_list: ItemList = $MarginContainer/VBox/AcceptedList
 @onready var send_button: Button = $MarginContainer/VBox/Actions/SendButton
 @onready var clear_button: Button = $MarginContainer/VBox/Actions/ClearButton
+@onready var round_timer: Timer = $RoundTimer
 
 var board_cells: Dictionary = {}
 var button_by_position: Dictionary = {}
@@ -32,10 +35,13 @@ var score: int = 0
 var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
 var accepted_words: Dictionary = {}
 var current_board: Array[Array] = []
+var remaining_seconds: int = 0
+var round_active: bool = false
 
 func _ready() -> void:
 	send_button.pressed.connect(_on_send_pressed)
 	clear_button.pressed.connect(_clear_selection)
+	round_timer.timeout.connect(_on_round_timer_timeout)
 
 	var dice_set: DiceSet = DiceSet.from_json_file(DICE_PATH)
 	if not dice_set.is_valid_for_board(BOARD_SIZE):
@@ -52,8 +58,40 @@ func _ready() -> void:
 		_update_dictionary_info(words.size())
 	else:
 		dictionary_info_label.text = "Validación de diccionario: desactivada (modo prototipo)."
+
+	_start_round()
 	_update_labels()
 
+
+func _start_round() -> void:
+	remaining_seconds = max(round_duration_seconds, 1)
+	round_active = true
+	round_timer.start()
+	_set_board_interaction(true)
+	_update_timer_label()
+
+func _on_round_timer_timeout() -> void:
+	if not round_active:
+		return
+	remaining_seconds = max(remaining_seconds - 1, 0)
+	_update_timer_label()
+	if remaining_seconds == 0:
+		round_active = false
+		round_timer.stop()
+		_set_board_interaction(false)
+		feedback_label.text = "⏰ Fin de ronda"
+
+func _update_timer_label() -> void:
+	var minutes: int = remaining_seconds / 60
+	var seconds: int = remaining_seconds % 60
+	timer_label.text = "Tiempo: %d:%02d" % [minutes, seconds]
+
+func _set_board_interaction(enabled: bool) -> void:
+	for button_variant in button_by_position.values():
+		var button: Button = button_variant
+		button.disabled = not enabled
+	send_button.disabled = not enabled
+	clear_button.disabled = not enabled
 
 func _on_viewport_size_changed() -> void:
 	if current_board.is_empty():
@@ -62,10 +100,15 @@ func _on_viewport_size_changed() -> void:
 
 func _calculate_tile_size() -> int:
 	var viewport_size: Vector2i = get_viewport_rect().size
-	var reserved_height: int = 300
-	var available_for_board: int = max(viewport_size.y - reserved_height, 240)
-	var tile_size: int = int((available_for_board / float(BOARD_SIZE)) - 6.0)
-	return clampi(tile_size, 48, 88)
+	var horizontal_margin: int = 40
+	var vertical_reserved: int = 320
+	var available_width: int = max(viewport_size.x - horizontal_margin, 240)
+	var available_height: int = max(viewport_size.y - vertical_reserved, 240)
+	var gap: int = 4
+	var size_by_width: int = int((available_width - (BOARD_SIZE - 1) * gap) / float(BOARD_SIZE))
+	var size_by_height: int = int((available_height - (BOARD_SIZE - 1) * gap) / float(BOARD_SIZE))
+	var tile_size: int = min(size_by_width, size_by_height)
+	return clampi(tile_size, 42, 110)
 
 func _build_board(board: Array[Array]) -> void:
 	for child in board_grid.get_children():
@@ -110,6 +153,9 @@ func _build_board(board: Array[Array]) -> void:
 			button_by_position[position] = tile
 
 func _on_cell_pressed(position: Vector2i) -> void:
+	if not round_active:
+		return
+
 	if selected_path.has(position):
 		feedback_label.text = "No puedes repetir una celda en la misma palabra."
 		return
@@ -127,6 +173,10 @@ func _on_cell_pressed(position: Vector2i) -> void:
 	_update_labels()
 
 func _on_send_pressed() -> void:
+	if not round_active:
+		feedback_label.text = "La ronda terminó."
+		return
+
 	if selected_path.is_empty():
 		feedback_label.text = "Selecciona al menos una letra."
 		return
