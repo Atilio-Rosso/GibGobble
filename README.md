@@ -80,3 +80,13 @@ godot4 --headless --path . --script res://tests/run_tests.gd
 ```
 
 Si tu sistema usa `godot` en lugar de `godot4`, reemplaza el comando.
+
+
+## Ejecutar escena jugable mínima
+Desde `godot/` abre el proyecto en el editor o ejecuta:
+
+```bash
+godot4 --path .
+```
+
+La escena principal está en `res://scenes/Game.tscn` y muestra un tablero 5x5 interactivo (Fase B mínima).
