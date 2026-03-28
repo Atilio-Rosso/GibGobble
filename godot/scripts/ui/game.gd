@@ -19,12 +19,16 @@ const DICTIONARY_PATHS: Array[String] = [
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
 @onready var score_label: Label = $MarginContainer/VBox/TopBar/ScoreLabel
 @onready var timer_label: Label = $MarginContainer/VBox/TopBar/TimerLabel
+@onready var restart_button: Button = $MarginContainer/VBox/TopBar/RestartButton
 @onready var feedback_label: Label = $MarginContainer/VBox/FeedbackLabel
 @onready var dictionary_info_label: Label = $MarginContainer/VBox/DictionaryInfoLabel
 @onready var accepted_list: ItemList = $MarginContainer/VBox/AcceptedList
 @onready var send_button: Button = $MarginContainer/VBox/Actions/SendButton
 @onready var clear_button: Button = $MarginContainer/VBox/Actions/ClearButton
 @onready var round_timer: Timer = $RoundTimer
+@onready var pause_overlay: ColorRect = $PauseOverlay
+@onready var finalize_button: Button = $PauseOverlay/ConfirmPanel/PopupVBox/PopupActions/FinalizeButton
+@onready var back_button: Button = $PauseOverlay/ConfirmPanel/PopupVBox/PopupActions/BackButton
 
 var board_cells: Dictionary = {}
 var button_by_position: Dictionary = {}
@@ -37,10 +41,14 @@ var accepted_words: Dictionary = {}
 var current_board: Array[Array] = []
 var remaining_seconds: int = 0
 var round_active: bool = false
+var was_round_active_before_popup: bool = false
 
 func _ready() -> void:
 	send_button.pressed.connect(_on_send_pressed)
 	clear_button.pressed.connect(_clear_selection)
+	restart_button.pressed.connect(_on_restart_pressed)
+	finalize_button.pressed.connect(_on_finalize_pressed)
+	back_button.pressed.connect(_on_back_pressed)
 	round_timer.timeout.connect(_on_round_timer_timeout)
 
 	var dice_set: DiceSet = DiceSet.from_json_file(DICE_PATH)
@@ -59,6 +67,7 @@ func _ready() -> void:
 	else:
 		dictionary_info_label.text = "Validación de diccionario: desactivada (modo prototipo)."
 
+	pause_overlay.visible = false
 	_start_round()
 	_update_labels()
 
@@ -76,10 +85,7 @@ func _on_round_timer_timeout() -> void:
 	remaining_seconds = max(remaining_seconds - 1, 0)
 	_update_timer_label()
 	if remaining_seconds == 0:
-		round_active = false
-		round_timer.stop()
-		_set_board_interaction(false)
-		feedback_label.text = "⏰ Fin de ronda"
+		_end_round("⏰ Fin de ronda")
 
 func _update_timer_label() -> void:
 	var minutes: int = remaining_seconds / 60
@@ -92,6 +98,38 @@ func _set_board_interaction(enabled: bool) -> void:
 		button.disabled = not enabled
 	send_button.disabled = not enabled
 	clear_button.disabled = not enabled
+	restart_button.disabled = not enabled
+
+func _on_restart_pressed() -> void:
+	if not round_active:
+		return
+	was_round_active_before_popup = round_active
+	round_timer.stop()
+	_set_board_interaction(false)
+	pause_overlay.visible = true
+	board_grid.modulate = Color(1, 1, 1, 0.08)
+	accepted_list.modulate = Color(1, 1, 1, 0.25)
+
+func _on_back_pressed() -> void:
+	pause_overlay.visible = false
+	board_grid.modulate = Color(1, 1, 1, 1)
+	accepted_list.modulate = Color(1, 1, 1, 1)
+	if was_round_active_before_popup and remaining_seconds > 0:
+		round_active = true
+		round_timer.start()
+		_set_board_interaction(true)
+
+func _on_finalize_pressed() -> void:
+	pause_overlay.visible = false
+	board_grid.modulate = Color(1, 1, 1, 1)
+	accepted_list.modulate = Color(1, 1, 1, 1)
+	_end_round("Partida finalizada.")
+
+func _end_round(message: String) -> void:
+	round_active = false
+	round_timer.stop()
+	_set_board_interaction(false)
+	feedback_label.text = message
 
 func _on_viewport_size_changed() -> void:
 	if current_board.is_empty():
@@ -153,6 +191,8 @@ func _build_board(board: Array[Array]) -> void:
 			button_by_position[position] = tile
 
 func _on_cell_pressed(position: Vector2i) -> void:
+	if pause_overlay.visible:
+		return
 	if not round_active:
 		return
 
@@ -173,6 +213,8 @@ func _on_cell_pressed(position: Vector2i) -> void:
 	_update_labels()
 
 func _on_send_pressed() -> void:
+	if pause_overlay.visible:
+		return
 	if not round_active:
 		feedback_label.text = "La ronda terminó."
 		return

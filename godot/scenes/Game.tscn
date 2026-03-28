@@ -43,6 +43,10 @@ text = "Palabra:"
 layout_mode = 2
 text = "Tiempo: 3:00"
 
+[node name="RestartButton" type="Button" parent="MarginContainer/VBox/TopBar"]
+layout_mode = 2
+text = "Reiniciar"
+
 [node name="BoardGrid" type="GridContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -83,3 +87,59 @@ custom_minimum_size = Vector2(0, 120)
 wait_time = 1.0
 one_shot = false
 autostart = false
+
+[node name="PauseOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="ConfirmPanel" type="Panel" parent="PauseOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -80.0
+offset_right = 210.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PopupVBox" type="VBoxContainer" parent="PauseOverlay/ConfirmPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="PopupText" type="Label" parent="PauseOverlay/ConfirmPanel/PopupVBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "¿Estas seguro que quieres reiniciar el juego?"
+
+[node name="PopupActions" type="HBoxContainer" parent="PauseOverlay/ConfirmPanel/PopupVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="FinalizeButton" type="Button" parent="PauseOverlay/ConfirmPanel/PopupVBox/PopupActions"]
+layout_mode = 2
+text = "Finalizar"
+
+[node name="BackButton" type="Button" parent="PauseOverlay/ConfirmPanel/PopupVBox/PopupActions"]
+layout_mode = 2
+text = "Volver"

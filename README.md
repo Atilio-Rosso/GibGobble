@@ -113,3 +113,12 @@ El contador comienza en `3:00` y descuenta segundo a segundo hasta `0:00`.
 
 ## Orientación y layout
 El proyecto está configurado para orientación vertical (portrait) en móvil y el tablero ajusta tamaño de celdas en forma responsive para ocupar casi todo el ancho visible con margen.
+
+
+
+## Reinicio con confirmación
+Se agregó un botón **Reiniciar** en la barra superior. Al presionarlo aparece un popup de confirmación con:
+- **Finalizar**: termina la partida en curso.
+- **Volver**: cierra el popup y retoma la partida.
+
+Mientras el popup está visible, el temporizador se pausa y el tablero queda atenuado para evitar seguir jugando/leyendo palabras.
