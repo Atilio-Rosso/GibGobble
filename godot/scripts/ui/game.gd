@@ -29,6 +29,7 @@ var selected_buttons: Array[Button] = []
 var validator: WordValidator
 var score: int = 0
 var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
+var current_board: Array[Array] = []
 
 func _ready() -> void:
 	send_button.pressed.connect(_on_send_pressed)
@@ -39,13 +40,27 @@ func _ready() -> void:
 		feedback_label.text = "Error: DiceSet inválido para tablero 5x5."
 		return
 
-	var board: Array[Array] = BoardGenerator.generate_board(dice_set, BOARD_SIZE)
-	_build_board(board)
+	current_board = BoardGenerator.generate_board(dice_set, BOARD_SIZE)
+	_build_board(current_board)
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 	var words: PackedStringArray = _load_dictionaries(DICTIONARY_PATHS)
 	validator = WordValidator.new(words, 4)
 	_update_dictionary_info(words.size())
 	_update_labels()
+
+
+func _on_viewport_size_changed() -> void:
+	if current_board.is_empty():
+		return
+	_build_board(current_board)
+
+func _calculate_tile_size() -> int:
+	var viewport_size: Vector2i = get_viewport_rect().size
+	var reserved_height: int = 300
+	var available_for_board: int = max(viewport_size.y - reserved_height, 240)
+	var tile_size: int = int((available_for_board / float(BOARD_SIZE)) - 6.0)
+	return clampi(tile_size, 48, 88)
 
 func _build_board(board: Array[Array]) -> void:
 	for child in board_grid.get_children():
@@ -64,12 +79,15 @@ func _build_board(board: Array[Array]) -> void:
 
 			var tile: Button = Button.new()
 			tile.text = ""
-			tile.custom_minimum_size = Vector2(96, 96)
+			var tile_size: int = _calculate_tile_size()
+			tile.custom_minimum_size = Vector2(tile_size, tile_size)
 			tile.focus_mode = Control.FOCUS_NONE
 			tile.pressed.connect(_on_cell_pressed.bind(position))
 
 			var letter_label: Label = Label.new()
 			letter_label.text = str(cell["letter"])
+			var letter_font_size: int = max(int(tile_size * 0.8), 24)
+			letter_label.add_theme_font_size_override("font_size", letter_font_size)
 			letter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			letter_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			letter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

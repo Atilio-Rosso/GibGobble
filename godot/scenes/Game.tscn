@@ -25,11 +25,11 @@ grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 12
 
 [node name="ScoreLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 layout_mode = 2
@@ -43,8 +43,8 @@ text = "Palabra:"
 layout_mode = 2
 size_flags_vertical = 3
 columns = 5
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 
 [node name="Actions" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
@@ -73,4 +73,4 @@ text = "Palabras aceptadas"
 
 [node name="AcceptedList" type="ItemList" parent="MarginContainer/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 120)
