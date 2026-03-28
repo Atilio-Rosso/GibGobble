@@ -50,11 +50,6 @@ text = "Tiempo: 3:00"
 layout_mode = 2
 text = "Reiniciar"
 
-[node name="CurrentWordLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
-layout_mode = 2
-autowrap_mode = 3
-text = "Palabra:"
-
 [node name="BoardCenter" type="CenterContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -65,6 +60,11 @@ columns = 5
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 4
 alignment = 1
+
+[node name="CurrentWordLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Palabra:"
 
 [node name="Actions" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2

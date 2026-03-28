@@ -16,7 +16,10 @@ const DICTIONARY_PATHS: Array[String] = [
 ]
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardCenter/BoardGrid
-@onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
+@onready var current_word_label: Label = _find_node([
+	"MarginContainer/VBox/CurrentWordLabel",
+	"MarginContainer/VBox/TopBar/CurrentWordLabel"
+]) as Label
 @onready var score_label: Label = _find_node([
 	"MarginContainer/VBox/TopBar/TopRow/ScoreLabel",
 	"MarginContainer/VBox/TopBar/ScoreLabel"
@@ -64,9 +67,9 @@ func _find_node(paths: Array[String]) -> Node:
 	return null
 
 func _ready() -> void:
-	if restart_button == null or score_label == null or timer_label == null:
+	if restart_button == null or score_label == null or timer_label == null or current_word_label == null:
 		push_error("Faltan nodos requeridos en Game.tscn (TopBar labels/buttons).")
-		feedback_label.text = "Error de UI: faltan controles en TopBar."
+		feedback_label.text = "Error de UI: faltan controles requeridos."
 		return
 
 	send_button.pressed.connect(_on_send_pressed)
