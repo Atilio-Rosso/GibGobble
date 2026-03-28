@@ -1,0 +1,31 @@
+{
+  "name": "big_boggle_5x5_default",
+  "board_size": 5,
+  "dice": [
+    "ABCDEF",
+    "GHIJKL",
+    "MNOPQR",
+    "STUVWX",
+    "YZABCD",
+    "EFGHIJ",
+    "KLMNOP",
+    "QRSTUV",
+    "WXYZAB",
+    "CDEFGH",
+    "IJKLMN",
+    "OPQRST",
+    "UVWXYZ",
+    "ACGIKM",
+    "BDFHJL",
+    "NPRTVX",
+    "OQSUWY",
+    "AEIOUY",
+    "BCDFGH",
+    "JKLMQR",
+    "NPSTVW",
+    "ADGJMP",
+    "BEHKNQ",
+    "CFILOR",
+    "DGJMPS"
+  ]
+}
