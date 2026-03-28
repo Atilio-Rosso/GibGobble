@@ -102,3 +102,5 @@ Si falta alguno, continúa con los disponibles y muestra en pantalla cuál qued�
 
 
 Regla actual de validación en runtime: **mínimo de 4 letras por palabra**.
+
+Modo actual del prototipo: **validación de diccionario desactivada** para priorizar pruebas de UX/jugabilidad (se mantienen reglas de mínimo 4 letras y no duplicados).

@@ -8,6 +8,7 @@ const ScoringService = preload("res://scripts/core/scoring_service.gd")
 
 const BOARD_SIZE: int = 5
 const DICE_PATH: String = "res://data/dice_set_big_boggle.json"
+const ENABLE_DICTIONARY_VALIDATION: bool = false
 const DICTIONARY_PATHS: Array[String] = [
 	"res://data/dictionary_es_demo.txt",
 	"res://data/dictionary_en_demo.txt"
@@ -29,6 +30,7 @@ var selected_buttons: Array[Button] = []
 var validator: WordValidator
 var score: int = 0
 var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
+var accepted_words: Dictionary = {}
 var current_board: Array[Array] = []
 
 func _ready() -> void:
@@ -44,9 +46,12 @@ func _ready() -> void:
 	_build_board(current_board)
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
-	var words: PackedStringArray = _load_dictionaries(DICTIONARY_PATHS)
-	validator = WordValidator.new(words, 4)
-	_update_dictionary_info(words.size())
+	if ENABLE_DICTIONARY_VALIDATION:
+		var words: PackedStringArray = _load_dictionaries(DICTIONARY_PATHS)
+		validator = WordValidator.new(words, 4)
+		_update_dictionary_info(words.size())
+	else:
+		dictionary_info_label.text = "Validación de diccionario: desactivada (modo prototipo)."
 	_update_labels()
 
 
@@ -70,6 +75,7 @@ func _build_board(board: Array[Array]) -> void:
 	button_by_position.clear()
 	selected_path.clear()
 	selected_buttons.clear()
+	accepted_words.clear()
 
 	for row in board:
 		for cell_variant in row:
@@ -130,18 +136,37 @@ func _on_send_pressed() -> void:
 		_clear_selection(false)
 		return
 
-	var word: String = _current_word()
-	var result: Dictionary = validator.validate_word(word)
-	if bool(result["valid"]):
+	var word: String = _current_word().to_upper()
+	if word.length() < 4:
+		feedback_label.text = "❌ %s (too_short)" % word
+		_clear_selection(false)
+		_update_labels()
+		return
+
+	if accepted_words.has(word):
+		feedback_label.text = "❌ %s (duplicate)" % word
+		_clear_selection(false)
+		_update_labels()
+		return
+
+	var is_valid: bool = true
+	var invalid_reason: String = ""
+	if ENABLE_DICTIONARY_VALIDATION:
+		var result: Dictionary = validator.validate_word(word)
+		is_valid = bool(result["valid"])
+		invalid_reason = String(result["reason"])
+
+	if is_valid:
+		accepted_words[word] = true
 		var points: int = ScoringService.points_for_word_length(word.length())
 		score += points
 		accepted_list.add_item("%s (+%d)" % [word, points])
 		feedback_label.text = "✅ %s aceptada" % word
 	else:
-		if String(result["reason"]) == "not_in_dictionary":
+		if invalid_reason == "not_in_dictionary":
 			feedback_label.text = "❌ %s no está en el diccionario activo" % word
 		else:
-			feedback_label.text = "❌ %s (%s)" % [word, String(result["reason"])]
+			feedback_label.text = "❌ %s (%s)" % [word, invalid_reason]
 
 	_clear_selection(false)
 	_update_labels()
