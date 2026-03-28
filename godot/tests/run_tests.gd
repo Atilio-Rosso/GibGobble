@@ -6,7 +6,7 @@ const PathValidator = preload("res://scripts/core/path_validator.gd")
 const ScoringService = preload("res://scripts/core/scoring_service.gd")
 const WordValidator = preload("res://scripts/core/word_validator.gd")
 
-var failed := 0
+var failed: int = 0
 
 func _init() -> void:
 	test_dice_set_validation()
@@ -31,33 +31,35 @@ func test_dice_set_validation() -> void:
 	var valid_dice: Array[String] = []
 	for _i in range(25):
 		valid_dice.append("ABCDEF")
-	var ds := DiceSet.new(valid_dice)
+	var ds: DiceSet = DiceSet.new(valid_dice)
 	expect(ds.is_valid_for_board(5), "DiceSet válido para 5x5")
 
 	valid_dice.pop_back()
-	var invalid := DiceSet.new(valid_dice)
+	var invalid: DiceSet = DiceSet.new(valid_dice)
 	expect(not invalid.is_valid_for_board(5), "DiceSet inválido si no tiene 25 dados")
 
 	var repeated_faces: Array[String] = []
 	for _j in range(25):
 		repeated_faces.append("AABCDE")
-	var invalid_repeated := DiceSet.new(repeated_faces)
+	var invalid_repeated: DiceSet = DiceSet.new(repeated_faces)
 	expect(not invalid_repeated.is_valid_for_board(5), "DiceSet inválido si un dado repite letras")
 
 func test_board_generation_uses_25_unique_dice() -> void:
 	var dice: Array[String] = []
 	for i in range(25):
 		dice.append("ABCDEF")
-	var ds := DiceSet.new(dice)
-	var rng := RandomNumberGenerator.new()
+	var ds: DiceSet = DiceSet.new(dice)
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = 12345
-	var board := BoardGenerator.generate_board(ds, 5, rng)
+	var board: Array[Array] = BoardGenerator.generate_board(ds, 5, rng)
 
-	var seen := {}
+	var seen: Dictionary = {}
 	for row in board:
-		for cell in row:
-			seen[cell.die_id] = true
-			expect([0, 90, 180, 270].has(cell.rotation_degrees), "Rotación válida")
+		for cell_variant in row:
+			var cell: Dictionary = cell_variant
+			seen[cell["die_id"]] = true
+			var rotation: int = int(cell["rotation_degrees"])
+			expect([0, 90, 180, 270].has(rotation), "Rotación válida")
 	expect(seen.size() == 25, "Cada tablero debe usar los 25 dados exactamente una vez")
 
 func test_path_validator() -> void:
@@ -77,12 +79,12 @@ func test_scoring() -> void:
 	expect(ScoringService.points_for_word_length(8) == 11, "8 letras = 11")
 
 func test_word_validator() -> void:
-	var validator := WordValidator.new(PackedStringArray(["CASA", "PERRO"]), 4)
-	var first := validator.validate_word("casa")
-	expect(first.valid, "CASA debe ser válida")
+	var validator: WordValidator = WordValidator.new(PackedStringArray(["CASA", "PERRO"]), 4)
+	var first: Dictionary = validator.validate_word("casa")
+	expect(bool(first["valid"]), "CASA debe ser válida")
 
-	var dup := validator.validate_word("CASA")
-	expect(not dup.valid and dup.reason == "duplicate", "CASA duplicada inválida")
+	var dup: Dictionary = validator.validate_word("CASA")
+	expect((not bool(dup["valid"])) and String(dup["reason"]) == "duplicate", "CASA duplicada inválida")
 
-	var short := validator.validate_word("sol")
-	expect(not short.valid and short.reason == "too_short", "Palabra corta inválida")
+	var short: Dictionary = validator.validate_word("sol")
+	expect((not bool(short["valid"])) and String(short["reason"]) == "too_short", "Palabra corta inválida")

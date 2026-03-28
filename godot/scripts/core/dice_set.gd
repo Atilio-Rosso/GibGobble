@@ -7,7 +7,7 @@ func _init(raw_dice: Array[String] = []) -> void:
 	dice = raw_dice.duplicate()
 
 static func from_json_file(path: String) -> DiceSet:
-	var file := FileAccess.open(path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		push_error("No se pudo abrir el archivo de dados: %s" % path)
 		return DiceSet.new([])
@@ -43,9 +43,9 @@ func is_valid_for_board(board_size: int) -> bool:
 	return true
 
 func _has_unique_faces(die: String) -> bool:
-	var seen := {}
+	var seen: Dictionary = {}
 	for i in range(die.length()):
-		var letter := die.substr(i, 1)
+		var letter: String = die.substr(i, 1)
 		if seen.has(letter):
 			return false
 		seen[letter] = true

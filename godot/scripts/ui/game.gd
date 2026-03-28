@@ -6,9 +6,9 @@ const PathValidator = preload("res://scripts/core/path_validator.gd")
 const WordValidator = preload("res://scripts/core/word_validator.gd")
 const ScoringService = preload("res://scripts/core/scoring_service.gd")
 
-const BOARD_SIZE := 5
-const DEFAULT_DICTIONARY_PATH := "res://data/dictionary_es_demo.txt"
-const DICE_PATH := "res://data/dice_set_big_boggle.json"
+const BOARD_SIZE: int = 5
+const DEFAULT_DICTIONARY_PATH: String = "res://data/dictionary_es_demo.txt"
+const DICE_PATH: String = "res://data/dice_set_big_boggle.json"
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
@@ -18,26 +18,26 @@ const DICE_PATH := "res://data/dice_set_big_boggle.json"
 @onready var send_button: Button = $MarginContainer/VBox/Actions/SendButton
 @onready var clear_button: Button = $MarginContainer/VBox/Actions/ClearButton
 
-var board_cells := {}
-var button_by_position := {}
+var board_cells: Dictionary = {}
+var button_by_position: Dictionary = {}
 var selected_path: Array[Vector2i] = []
 var selected_buttons: Array[Button] = []
 var validator: WordValidator
-var score := 0
+var score: int = 0
 
 func _ready() -> void:
 	send_button.pressed.connect(_on_send_pressed)
 	clear_button.pressed.connect(_clear_selection)
 
-	var dice_set := DiceSet.from_json_file(DICE_PATH)
+	var dice_set: DiceSet = DiceSet.from_json_file(DICE_PATH)
 	if not dice_set.is_valid_for_board(BOARD_SIZE):
 		feedback_label.text = "Error: DiceSet inválido para tablero 5x5."
 		return
 
-	var board := BoardGenerator.generate_board(dice_set, BOARD_SIZE)
+	var board: Array[Array] = BoardGenerator.generate_board(dice_set, BOARD_SIZE)
 	_build_board(board)
 
-	var words := _load_dictionary(DEFAULT_DICTIONARY_PATH)
+	var words: PackedStringArray = _load_dictionary(DEFAULT_DICTIONARY_PATH)
 	validator = WordValidator.new(words, 3)
 	_update_labels()
 
@@ -55,7 +55,7 @@ func _build_board(board: Array[Array]) -> void:
 			var position: Vector2i = cell["position"]
 			board_cells[position] = cell
 
-			var tile := Button.new()
+			var tile: Button = Button.new()
 			tile.text = str(cell["letter"])
 			tile.custom_minimum_size = Vector2(96, 96)
 			tile.pivot_offset = tile.custom_minimum_size / 2.0
@@ -71,7 +71,7 @@ func _on_cell_pressed(position: Vector2i) -> void:
 		return
 
 	if not selected_path.is_empty():
-		var previous := selected_path[selected_path.size() - 1]
+		var previous: Vector2i = selected_path[selected_path.size() - 1]
 		if not PathValidator.is_adjacent(previous, position):
 			feedback_label.text = "La letra seleccionada debe ser adyacente."
 			return
@@ -92,10 +92,10 @@ func _on_send_pressed() -> void:
 		_clear_selection(false)
 		return
 
-	var word := _current_word()
-	var result := validator.validate_word(word)
+	var word: String = _current_word()
+	var result: Dictionary = validator.validate_word(word)
 	if result["valid"]:
-		var points := ScoringService.points_for_word_length(word.length())
+		var points: int = ScoringService.points_for_word_length(word.length())
 		score += points
 		accepted_list.add_item("%s (+%d)" % [word, points])
 		feedback_label.text = "✅ %s aceptada" % word
@@ -125,14 +125,14 @@ func _update_labels() -> void:
 	score_label.text = "Puntaje: %d" % score
 
 func _load_dictionary(path: String) -> PackedStringArray:
-	var file := FileAccess.open(path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		feedback_label.text = "No se encontró diccionario demo, usando lista mínima."
 		return PackedStringArray(["CASA", "PERRO", "GATO", "SOL", "LUNA", "JUEGO", "DADO"])
 
-	var words := PackedStringArray()
+	var words: PackedStringArray = PackedStringArray()
 	while not file.eof_reached():
-		var line := file.get_line().strip_edges()
+		var line: String = file.get_line().strip_edges()
 		if line.is_empty():
 			continue
 		words.append(line.to_upper())
