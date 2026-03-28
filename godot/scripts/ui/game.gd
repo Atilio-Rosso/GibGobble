@@ -7,13 +7,17 @@ const WordValidator = preload("res://scripts/core/word_validator.gd")
 const ScoringService = preload("res://scripts/core/scoring_service.gd")
 
 const BOARD_SIZE: int = 5
-const DEFAULT_DICTIONARY_PATH: String = "res://data/dictionary_es_demo.txt"
 const DICE_PATH: String = "res://data/dice_set_big_boggle.json"
+const DICTIONARY_PATHS: PackedStringArray = PackedStringArray([
+	"res://data/dictionary_es_demo.txt",
+	"res://data/dictionary_en_demo.txt"
+])
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
 @onready var score_label: Label = $MarginContainer/VBox/TopBar/ScoreLabel
 @onready var feedback_label: Label = $MarginContainer/VBox/FeedbackLabel
+@onready var dictionary_info_label: Label = $MarginContainer/VBox/DictionaryInfoLabel
 @onready var accepted_list: ItemList = $MarginContainer/VBox/AcceptedList
 @onready var send_button: Button = $MarginContainer/VBox/Actions/SendButton
 @onready var clear_button: Button = $MarginContainer/VBox/Actions/ClearButton
@@ -24,6 +28,7 @@ var selected_path: Array[Vector2i] = []
 var selected_buttons: Array[Button] = []
 var validator: WordValidator
 var score: int = 0
+var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
 
 func _ready() -> void:
 	send_button.pressed.connect(_on_send_pressed)
@@ -37,8 +42,9 @@ func _ready() -> void:
 	var board: Array[Array] = BoardGenerator.generate_board(dice_set, BOARD_SIZE)
 	_build_board(board)
 
-	var words: PackedStringArray = _load_dictionary(DEFAULT_DICTIONARY_PATH)
-	validator = WordValidator.new(words, 3)
+	var words: PackedStringArray = _load_dictionaries(DICTIONARY_PATHS)
+	validator = WordValidator.new(words, 4)
+	_update_dictionary_info(words.size())
 	_update_labels()
 
 func _build_board(board: Array[Array]) -> void:
@@ -51,17 +57,31 @@ func _build_board(board: Array[Array]) -> void:
 	selected_buttons.clear()
 
 	for row in board:
-		for cell in row:
+		for cell_variant in row:
+			var cell: Dictionary = cell_variant
 			var position: Vector2i = cell["position"]
 			board_cells[position] = cell
 
 			var tile: Button = Button.new()
-			tile.text = str(cell["letter"])
+			tile.text = ""
 			tile.custom_minimum_size = Vector2(96, 96)
-			tile.pivot_offset = tile.custom_minimum_size / 2.0
-			tile.rotation_degrees = float(cell["rotation_degrees"])
 			tile.focus_mode = Control.FOCUS_NONE
 			tile.pressed.connect(_on_cell_pressed.bind(position))
+
+			var letter_label: Label = Label.new()
+			letter_label.text = str(cell["letter"])
+			letter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			letter_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			letter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			letter_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+			letter_label.offset_left = 0
+			letter_label.offset_top = 0
+			letter_label.offset_right = 0
+			letter_label.offset_bottom = 0
+			letter_label.pivot_offset = tile.custom_minimum_size / 2.0
+			letter_label.rotation_degrees = float(cell["rotation_degrees"])
+			tile.add_child(letter_label)
+
 			board_grid.add_child(tile)
 			button_by_position[position] = tile
 
@@ -94,13 +114,16 @@ func _on_send_pressed() -> void:
 
 	var word: String = _current_word()
 	var result: Dictionary = validator.validate_word(word)
-	if result["valid"]:
+	if bool(result["valid"]):
 		var points: int = ScoringService.points_for_word_length(word.length())
 		score += points
 		accepted_list.add_item("%s (+%d)" % [word, points])
 		feedback_label.text = "✅ %s aceptada" % word
 	else:
-		feedback_label.text = "❌ %s (%s)" % [word, str(result["reason"])]
+		if String(result["reason"]) == "not_in_dictionary":
+			feedback_label.text = "❌ %s no está en el diccionario activo" % word
+		else:
+			feedback_label.text = "❌ %s (%s)" % [word, String(result["reason"])]
 
 	_clear_selection(false)
 	_update_labels()
@@ -117,23 +140,41 @@ func _clear_selection(update_feedback: bool = true) -> void:
 func _current_word() -> String:
 	var chars: Array[String] = []
 	for position in selected_path:
-		chars.append(str(board_cells[position]["letter"]))
+		var cell: Dictionary = board_cells[position]
+		chars.append(str(cell["letter"]))
 	return "".join(chars)
 
 func _update_labels() -> void:
 	current_word_label.text = "Palabra: %s" % _current_word()
 	score_label.text = "Puntaje: %d" % score
 
-func _load_dictionary(path: String) -> PackedStringArray:
-	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		feedback_label.text = "No se encontró diccionario demo, usando lista mínima."
-		return PackedStringArray(["CASA", "PERRO", "GATO", "SOL", "LUNA", "JUEGO", "DADO"])
+func _load_dictionaries(paths: PackedStringArray) -> PackedStringArray:
+	var words_set: Dictionary = {}
+	loaded_dictionary_paths = PackedStringArray()
+
+	for path in paths:
+		var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+		if file == null:
+			continue
+		loaded_dictionary_paths.append(path)
+		while not file.eof_reached():
+			var line: String = file.get_line().strip_edges()
+			if line.is_empty():
+				continue
+			words_set[line.to_upper()] = true
+
+	if words_set.is_empty():
+		feedback_label.text = "No se encontró diccionario demo (ES/EN)."
+		for fallback_word in ["CASA", "PERRO", "GATO", "LUNA", "GAME", "WORD"]:
+			words_set[String(fallback_word)] = true
 
 	var words: PackedStringArray = PackedStringArray()
-	while not file.eof_reached():
-		var line: String = file.get_line().strip_edges()
-		if line.is_empty():
-			continue
-		words.append(line.to_upper())
+	for word in words_set.keys():
+		words.append(String(word))
 	return words
+
+func _update_dictionary_info(total_words: int) -> void:
+	if loaded_dictionary_paths.is_empty():
+		dictionary_info_label.text = "Diccionario: fallback interno (%d palabras)." % total_words
+		return
+	dictionary_info_label.text = "Diccionario activo: %s (%d palabras)." % [", ".join(loaded_dictionary_paths), total_words]

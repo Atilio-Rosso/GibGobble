@@ -90,3 +90,15 @@ godot4 --path .
 ```
 
 La escena principal está en `res://scenes/Game.tscn` y muestra un tablero 5x5 interactivo (Fase B mínima).
+
+
+
+## Diccionarios de validación (demo)
+La escena carga diccionarios demo en este orden:
+- `res://data/dictionary_es_demo.txt`
+- `res://data/dictionary_en_demo.txt`
+
+Si falta alguno, continúa con los disponibles y muestra en pantalla cuál quedó activo.
+
+
+Regla actual de validación en runtime: **mínimo de 4 letras por palabra**.

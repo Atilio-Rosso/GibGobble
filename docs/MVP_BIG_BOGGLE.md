@@ -11,7 +11,7 @@ El MVP debe permitir una ronda completa de juego para un solo jugador.
 - Restricción: no repetir celda en la misma palabra.
 - Botón para enviar palabra.
 - Validación:
-  - longitud mínima (>= 3 o 4; configurable),
+  - longitud mínima (>= 4),
   - existe en diccionario,
   - no repetida en la ronda.
 - Puntaje por longitud.
@@ -32,7 +32,7 @@ El MVP debe permitir una ronda completa de juego para un solo jugador.
 - La rotación de una letra cambia su orientación visual, no su valor para formar palabras.
 - Adyacencia horizontal/vertical/diagonal.
 - Una celda solo puede usarse una vez por palabra.
-- Palabra mínima: 3 o 4 letras (definir antes de implementar).
+- Palabra mínima: 4 letras.
 - Scoring sugerido:
   - 3-4 letras: 1 punto
   - 5 letras: 2 puntos

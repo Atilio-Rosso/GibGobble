@@ -62,6 +62,11 @@ text = "Limpiar selección"
 layout_mode = 2
 text = "Selecciona letras adyacentes y envía la palabra."
 
+
+[node name="DictionaryInfoLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Diccionario activo: (cargando...)"
+
 [node name="AcceptedTitle" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
 text = "Palabras aceptadas"
