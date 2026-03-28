@@ -17,9 +17,18 @@ const DICTIONARY_PATHS: Array[String] = [
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
-@onready var score_label: Label = $MarginContainer/VBox/TopBar/TopRow/ScoreLabel
-@onready var timer_label: Label = $MarginContainer/VBox/TopBar/TopRow/TimerLabel
-@onready var restart_button: Button = $MarginContainer/VBox/TopBar/TopRow/RestartButton
+@onready var score_label: Label = _find_node([
+	"MarginContainer/VBox/TopBar/TopRow/ScoreLabel",
+	"MarginContainer/VBox/TopBar/ScoreLabel"
+]) as Label
+@onready var timer_label: Label = _find_node([
+	"MarginContainer/VBox/TopBar/TopRow/TimerLabel",
+	"MarginContainer/VBox/TopBar/TimerLabel"
+]) as Label
+@onready var restart_button: Button = _find_node([
+	"MarginContainer/VBox/TopBar/TopRow/RestartButton",
+	"MarginContainer/VBox/TopBar/RestartButton"
+]) as Button
 @onready var feedback_label: Label = $MarginContainer/VBox/FeedbackLabel
 @onready var dictionary_info_label: Label = $MarginContainer/VBox/DictionaryInfoLabel
 @onready var accepted_list: ItemList = $MarginContainer/VBox/AcceptedList
@@ -44,7 +53,19 @@ var remaining_seconds: int = 0
 var round_active: bool = false
 var was_round_active_before_popup: bool = false
 
+func _find_node(paths: Array[String]) -> Node:
+	for node_path in paths:
+		var node: Node = get_node_or_null(node_path)
+		if node != null:
+			return node
+	return null
+
 func _ready() -> void:
+	if restart_button == null or score_label == null or timer_label == null:
+		push_error("Faltan nodos requeridos en Game.tscn (TopBar labels/buttons).")
+		feedback_label.text = "Error de UI: faltan controles en TopBar."
+		return
+
 	send_button.pressed.connect(_on_send_pressed)
 	clear_button.pressed.connect(_clear_selection)
 	restart_button.pressed.connect(_on_restart_pressed)
