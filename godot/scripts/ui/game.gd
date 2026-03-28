@@ -17,9 +17,9 @@ const DICTIONARY_PATHS: Array[String] = [
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
-@onready var score_label: Label = $MarginContainer/VBox/TopBar/ScoreLabel
-@onready var timer_label: Label = $MarginContainer/VBox/TopBar/TimerLabel
-@onready var restart_button: Button = $MarginContainer/VBox/TopBar/RestartButton
+@onready var score_label: Label = $MarginContainer/VBox/TopBar/TopRow/ScoreLabel
+@onready var timer_label: Label = $MarginContainer/VBox/TopBar/TopRow/TimerLabel
+@onready var restart_button: Button = $MarginContainer/VBox/TopBar/TopRow/RestartButton
 @onready var feedback_label: Label = $MarginContainer/VBox/FeedbackLabel
 @onready var dictionary_info_label: Label = $MarginContainer/VBox/DictionaryInfoLabel
 @onready var accepted_list: ItemList = $MarginContainer/VBox/AcceptedList
@@ -34,6 +34,7 @@ var board_cells: Dictionary = {}
 var button_by_position: Dictionary = {}
 var selected_path: Array[Vector2i] = []
 var selected_buttons: Array[Button] = []
+var dice_set: DiceSet
 var validator: WordValidator
 var score: int = 0
 var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
@@ -51,7 +52,7 @@ func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
 	round_timer.timeout.connect(_on_round_timer_timeout)
 
-	var dice_set: DiceSet = DiceSet.from_json_file(DICE_PATH)
+	dice_set = DiceSet.from_json_file(DICE_PATH)
 	if not dice_set.is_valid_for_board(BOARD_SIZE):
 		feedback_label.text = "Error: DiceSet inválido para tablero 5x5."
 		return
@@ -69,6 +70,7 @@ func _ready() -> void:
 
 	pause_overlay.visible = false
 	_start_round()
+	_update_restart_button()
 	_update_labels()
 
 
@@ -78,6 +80,7 @@ func _start_round() -> void:
 	round_timer.start()
 	_set_board_interaction(true)
 	_update_timer_label()
+	_update_restart_button()
 
 func _on_round_timer_timeout() -> void:
 	if not round_active:
@@ -98,10 +101,16 @@ func _set_board_interaction(enabled: bool) -> void:
 		button.disabled = not enabled
 	send_button.disabled = not enabled
 	clear_button.disabled = not enabled
-	restart_button.disabled = not enabled
+
+func _update_restart_button() -> void:
+	if round_active:
+		restart_button.text = "Reiniciar"
+	else:
+		restart_button.text = "Iniciar"
 
 func _on_restart_pressed() -> void:
 	if not round_active:
+		_start_new_game()
 		return
 	was_round_active_before_popup = round_active
 	round_timer.stop()
@@ -118,6 +127,7 @@ func _on_back_pressed() -> void:
 		round_active = true
 		round_timer.start()
 		_set_board_interaction(true)
+		_update_restart_button()
 
 func _on_finalize_pressed() -> void:
 	pause_overlay.visible = false
@@ -130,23 +140,42 @@ func _end_round(message: String) -> void:
 	round_timer.stop()
 	_set_board_interaction(false)
 	feedback_label.text = message
+	_update_restart_button()
+
+func _start_new_game() -> void:
+	score = 0
+	accepted_words.clear()
+	accepted_list.clear()
+	selected_path.clear()
+	selected_buttons.clear()
+	current_board = BoardGenerator.generate_board(dice_set, BOARD_SIZE)
+	_build_board(current_board)
+	feedback_label.text = "Partida iniciada."
+	_start_round()
+	_update_labels()
 
 func _on_viewport_size_changed() -> void:
 	if current_board.is_empty():
 		return
+	_apply_responsive_layout()
 	_build_board(current_board)
 
 func _calculate_tile_size() -> int:
 	var viewport_size: Vector2i = get_viewport_rect().size
-	var horizontal_margin: int = 40
-	var vertical_reserved: int = 320
-	var available_width: int = max(viewport_size.x - horizontal_margin, 240)
-	var available_height: int = max(viewport_size.y - vertical_reserved, 240)
+	var horizontal_margin: int = 56
+	var available_width: int = max(viewport_size.x - horizontal_margin, 220)
+	var board_height_ratio: float = 0.52
+	var available_height: int = max(int(viewport_size.y * board_height_ratio), 220)
 	var gap: int = 4
 	var size_by_width: int = int((available_width - (BOARD_SIZE - 1) * gap) / float(BOARD_SIZE))
 	var size_by_height: int = int((available_height - (BOARD_SIZE - 1) * gap) / float(BOARD_SIZE))
 	var tile_size: int = min(size_by_width, size_by_height)
 	return clampi(tile_size, 42, 110)
+
+func _apply_responsive_layout() -> void:
+	var viewport_size: Vector2i = get_viewport_rect().size
+	var list_height: int = int(viewport_size.y * 0.15)
+	accepted_list.custom_minimum_size = Vector2(0, clampi(list_height, 72, 180))
 
 func _build_board(board: Array[Array]) -> void:
 	for child in board_grid.get_children():
@@ -156,7 +185,7 @@ func _build_board(board: Array[Array]) -> void:
 	button_by_position.clear()
 	selected_path.clear()
 	selected_buttons.clear()
-	accepted_words.clear()
+	_apply_responsive_layout()
 
 	for row in board:
 		for cell_variant in row:
