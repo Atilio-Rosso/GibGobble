@@ -8,10 +8,10 @@ const ScoringService = preload("res://scripts/core/scoring_service.gd")
 
 const BOARD_SIZE: int = 5
 const DICE_PATH: String = "res://data/dice_set_big_boggle.json"
-const DICTIONARY_PATHS: PackedStringArray = PackedStringArray([
+const DICTIONARY_PATHS: Array[String] = [
 	"res://data/dictionary_es_demo.txt",
 	"res://data/dictionary_en_demo.txt"
-])
+]
 
 @onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
@@ -148,7 +148,7 @@ func _update_labels() -> void:
 	current_word_label.text = "Palabra: %s" % _current_word()
 	score_label.text = "Puntaje: %d" % score
 
-func _load_dictionaries(paths: PackedStringArray) -> PackedStringArray:
+func _load_dictionaries(paths: Array[String]) -> PackedStringArray:
 	var words_set: Dictionary = {}
 	loaded_dictionary_paths = PackedStringArray()
 
