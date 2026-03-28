@@ -15,7 +15,7 @@ const DICTIONARY_PATHS: Array[String] = [
 	"res://data/dictionary_en_demo.txt"
 ]
 
-@onready var board_grid: GridContainer = $MarginContainer/VBox/BoardGrid
+@onready var board_grid: GridContainer = $MarginContainer/VBox/BoardCenter/BoardGrid
 @onready var current_word_label: Label = $MarginContainer/VBox/TopBar/CurrentWordLabel
 @onready var score_label: Label = _find_node([
 	"MarginContainer/VBox/TopBar/TopRow/ScoreLabel",
@@ -35,6 +35,7 @@ const DICTIONARY_PATHS: Array[String] = [
 @onready var send_button: Button = $MarginContainer/VBox/Actions/SendButton
 @onready var clear_button: Button = $MarginContainer/VBox/Actions/ClearButton
 @onready var round_timer: Timer = $RoundTimer
+@onready var round_end_sound: AudioStreamPlayer = $RoundEndSound
 @onready var pause_overlay: ColorRect = $PauseOverlay
 @onready var finalize_button: Button = $PauseOverlay/ConfirmPanel/PopupVBox/PopupActions/FinalizeButton
 @onready var back_button: Button = $PauseOverlay/ConfirmPanel/PopupVBox/PopupActions/BackButton
@@ -48,10 +49,12 @@ var validator: WordValidator
 var score: int = 0
 var loaded_dictionary_paths: PackedStringArray = PackedStringArray()
 var accepted_words: Dictionary = {}
+var accepted_word_entries: Array[String] = []
 var current_board: Array[Array] = []
 var remaining_seconds: int = 0
 var round_active: bool = false
 var was_round_active_before_popup: bool = false
+var end_sound_stream: AudioStreamGenerator
 
 func _find_node(paths: Array[String]) -> Node:
 	for node_path in paths:
@@ -90,6 +93,7 @@ func _ready() -> void:
 		dictionary_info_label.text = "Validación de diccionario: desactivada (modo prototipo)."
 
 	pause_overlay.visible = false
+	_initialize_end_sound()
 	_start_round()
 	_update_restart_button()
 	_update_labels()
@@ -109,6 +113,7 @@ func _on_round_timer_timeout() -> void:
 	remaining_seconds = max(remaining_seconds - 1, 0)
 	_update_timer_label()
 	if remaining_seconds == 0:
+		_play_round_end_sound()
 		_end_round("⏰ Fin de ronda")
 
 func _update_timer_label() -> void:
@@ -166,6 +171,7 @@ func _end_round(message: String) -> void:
 func _start_new_game() -> void:
 	score = 0
 	accepted_words.clear()
+	accepted_word_entries.clear()
 	accepted_list.clear()
 	selected_path.clear()
 	selected_buttons.clear()
@@ -302,7 +308,8 @@ func _on_send_pressed() -> void:
 		accepted_words[word] = true
 		var points: int = ScoringService.points_for_word_length(word.length())
 		score += points
-		accepted_list.add_item("%s (+%d)" % [word, points])
+		accepted_word_entries.insert(0, "%s (+%d)" % [word, points])
+		_refresh_accepted_list()
 		feedback_label.text = "✅ %s aceptada" % word
 	else:
 		if invalid_reason == "not_in_dictionary":
@@ -332,6 +339,35 @@ func _current_word() -> String:
 func _update_labels() -> void:
 	current_word_label.text = "Palabra: %s" % _current_word()
 	score_label.text = "Puntaje: %d" % score
+
+func _refresh_accepted_list() -> void:
+	accepted_list.clear()
+	for entry in accepted_word_entries:
+		accepted_list.add_item(entry)
+
+func _initialize_end_sound() -> void:
+	end_sound_stream = AudioStreamGenerator.new()
+	end_sound_stream.mix_rate = 44100.0
+	end_sound_stream.buffer_length = 0.5
+	round_end_sound.stream = end_sound_stream
+	round_end_sound.volume_db = -8.0
+
+func _play_round_end_sound() -> void:
+	if end_sound_stream == null:
+		_initialize_end_sound()
+	round_end_sound.play()
+	var playback: AudioStreamGeneratorPlayback = round_end_sound.get_stream_playback() as AudioStreamGeneratorPlayback
+	if playback == null:
+		return
+
+	var mix_rate: float = end_sound_stream.mix_rate
+	var duration_seconds: float = 0.45
+	var frame_count: int = int(mix_rate * duration_seconds)
+	for frame in range(frame_count):
+		var t: float = float(frame) / mix_rate
+		var envelope: float = max(1.0 - (t / duration_seconds), 0.0)
+		var sample: float = sin(TAU * 880.0 * t) * 0.35 * envelope
+		playback.push_frame(Vector2(sample, sample))
 
 func _load_dictionaries(paths: Array[String]) -> PackedStringArray:
 	var words_set: Dictionary = {}
