@@ -12,12 +12,18 @@ static func from_json_file(path: String) -> DiceSet:
 		push_error("No se pudo abrir el archivo de dados: %s" % path)
 		return DiceSet.new([])
 
-	var parsed := JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("JSON inválido para dados: %s" % path)
 		return DiceSet.new([])
 
-	var raw := parsed.get("dice", [])
+	var parsed_dict: Dictionary = parsed
+	var raw_variant: Variant = parsed_dict.get("dice", [])
+	if typeof(raw_variant) != TYPE_ARRAY:
+		push_error("Formato de dice inválido en JSON: %s" % path)
+		return DiceSet.new([])
+
+	var raw: Array = raw_variant
 	var normalized: Array[String] = []
 	for die in raw:
 		normalized.append(String(die).to_upper())
